@@ -31,3 +31,4 @@ for _, received in answered:
 
     print(f"{ip:<16} {mac:<18} {hostname}")
 
+
