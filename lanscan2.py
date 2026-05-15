@@ -24,7 +24,7 @@ answered, _ = scapy.arping(str(network), verbose=False)
 
 
 
-filename = scan_results.txt
+filename = "scan_results.txt"
 
 with open(filename, "w") as file:
     header = f"{'IP':<16} {'MAC':<18} {'Hostname'}\n"
