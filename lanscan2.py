@@ -1,112 +1,87 @@
 import scapy.all as scapy
 import ipaddress
 import socket
-import time
-from mac_vendor_lookup import MacLookup
-
-socket.setdefaulttimeout(1)
-
-MacLookup().update_vendors()
-
-lookup = MacLookup()
+from datetime import datetime
 
 def get_hostname(ip):
     try:
         return socket.gethostbyaddr(ip)[0]
-    except (socket.herror, socket.gaierror, TimeoutError):
+    except socket.herror:
         return "Unknown"
 
-def get_vendor(mac):
+while True:
+    ip_range = input("\nEnter IP range (e.g. 192.168.1.0/24): ")
     try:
-        return lookup.lookup(mac)
-    except:
-        return "Unknown"
+        network = ipaddress.ip_network(ip_range, strict=False)
+        print(f"{network} is a valid IP range")
+        break
+    except ValueError:
+        print("Invalid IP range, try again.")
 
-def get_network():
-    while True:
-        ip_range = input("\nEnter IP range (e.g. 192.168.1.0/24): ")
+print("\nScanning...\n")
 
-        try:
-            network = ipaddress.ip_network(ip_range, strict=False)
-            print(f"{network} is a valid IP range")
-            return network
+answered, _ = scapy.arping(str(network), verbose=False)
 
-        except ValueError:
-            print("Invalid IP range, try again.")
 
-def scan_network(network):
-    try:
-        answered, _ = scapy.arping(
-            str(network),
-            timeout=2,
-            retry=1,
-            verbose=False
-        )
 
-        return answered
+filename = "scan_results.txt"
 
-    except PermissionError:
-        print("\n[ERROR] Run this script as administrator/root.")
-        exit()
+with open(filename, "w") as file:
+    header = f"{'IP':<16} {'MAC':<18} {'Hostname'}\n"
+    separator = "-" * 50 + "\n"
 
-    except Exception as e:
-        print(f"\n[ERROR] {e}")
-        exit()
+    print(header.strip())
+    print("-" * 50)
 
-def main():
-    network = get_network()
-
-    print("\nScanning...\n")
-
-    start_time = time.time()
-
-    answered = scan_network(network)
-
-    devices = []
+    file.write(header)
+    file.write(separator)
 
     for _, received in answered:
         ip = received.psrc
         mac = received.hwsrc
+        hostname = get_hostname(ip)
 
-        devices.append({
-            "ip": ip,
-            "mac": mac,
-            "vendor": get_vendor(mac),
-            "hostname": get_hostname(ip)
-        })
+        line = f"{ip:<16} {mac:<18} {hostname}"
 
-    devices.sort(key=lambda d: ipaddress.ip_address(d["ip"]))
+        print(line)
+        file.write(line + "\n")
 
-    filename = "scan_results.txt"
+print(f"\nResults saved to: {filename}")
 
-    with open(filename, "w") as file:
 
-        header = f"{'IP':<16} {'MAC':<18} {'Vendor':<25} {'Hostname'}\n"
-        separator = "-" * 90 + "\n"
 
-        print(header.strip())
-        print("-" * 90)
 
-        file.write(header)
-        file.write(separator)
+And this:
 
-        for device in devices:
+import scapy.all as scapy
+import ipaddress
+import socket
 
-            line = (
-                f"{device['ip']:<16} "
-                f"{device['mac']:<18} "
-                f"{device['vendor']:<25} "
-                f"{device['hostname']}"
-            )
+def get_hostname(ip):
+    try:
+        return socket.gethostbyaddr(ip)[0]
+    except socket.herror:
+        return "Unknown"
 
-            print(line)
-            file.write(line + "\n")
+while True:
+    ip_range = input("\nEnter IP range (e.g. 192.168.1.0/24): ")
+    try:
+        network = ipaddress.ip_network(ip_range, strict=False)
+        print(f"{network} is a valid IP range")
+        break
+    except ValueError:
+        print("Invalid IP range, try again.")
 
-    end_time = time.time()
+print("\nScanning...\n")
 
-    print(f"\nDevices found: {len(devices)}")
-    print(f"Scan completed in {end_time - start_time:.2f} seconds")
-    print(f"Results saved to: {filename}")
+answered, _ = scapy.arping(str(network), verbose=False)
 
-if __name__ == "__main__":
-    main()
+print(f"{'IP':<16} {'MAC':<18} {'Hostname'}")
+print("-" * 50)
+
+for _, received in answered:
+    ip = received.psrc
+    mac = received.hwsrc
+    hostname = get_hostname(ip)
+
+    print(f"{ip:<16} {mac:<18} {hostname}")
