@@ -6,5 +6,6 @@ lanscan2.py however Scans IP, Hostname, Mac, and shows the results directly + pu
 
 
 How to use The Tool in Kali Linux CLI: 
+Get the tool: git clone https://github.com/SpecterCodo/Python-LAN-scanner
 install requirements: pip install -r requirements.txt
 run script: sudo python3 lanscan1.py/lanscan2.py
